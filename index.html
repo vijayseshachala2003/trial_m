@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Valentine Proposal 💘</title>
+  <meta name="description" content="A cute Bubu & Dudu Valentine proposal page." />
+
+  <style>
+    :root{
+      --bg1:#ffe3ec; --bg2:#ffd1dc; --bg3:#ffb3c6; --bg4:#ff8fab;
+      --card:#ffffffcc; --text:#2b2b2b;
+      --yes:#16a34a; --yes2:#22c55e;
+      --no:#ef4444;
+      --shadow: 0 18px 50px rgba(0,0,0,.12);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+
+    body{
+      margin:0; min-height:100vh;
+      display:grid; place-items:center;
+      color:var(--text);
+      background:
+        radial-gradient(circle at 20% 10%, var(--bg1), var(--bg2) 35%, var(--bg3) 70%, var(--bg4));
+      overflow:hidden;
+    }
+
+    /* Floating hearts */
+    .hearts{ position:fixed; inset:0; pointer-events:none; }
+    .heart{
+      position:absolute; bottom:-40px;
+      width:18px; height:18px; transform:rotate(45deg);
+      background: rgba(255,255,255,.75);
+      animation: floatUp linear infinite;
+      filter: drop-shadow(0 4px 6px rgba(0,0,0,.08));
+    }
+    .heart::before,.heart::after{
+      content:""; position:absolute; width:18px; height:18px; border-radius:50%;
+      background: inherit;
+    }
+    .heart::before{ left:-9px; top:0; }
+    .heart::after{ left:0; top:-9px; }
+    @keyframes floatUp{
+      from { transform: translateY(0) rotate(45deg); opacity:.0; }
+      10%  { opacity:.9; }
+      to   { transform: translateY(-110vh) rotate(45deg); opacity:0; }
+    }
+
+    .wrap{
+      width:min(920px, 92vw);
+      padding:18px;
+    }
+
+    .card{
+      background:var(--card);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,.6);
+      border-radius: 26px;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+
+    .top{
+      padding:26px 22px 10px;
+      text-align:center;
+    }
+
+    h1{
+      margin:0;
+      font-size: clamp(1.6rem, 4vw, 2.4rem);
+      letter-spacing:.2px;
+    }
+    .sub{
+      margin:10px auto 0;
+      max-width: 52ch;
+      font-size: 1.05rem;
+      opacity:.9;
+      line-height:1.45;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+      padding: 14px 18px 22px;
+    }
+
+    @media (min-width: 860px){
+      .grid{
+        grid-template-columns: 1.05fr .95fr;
+        align-items:center;
+      }
+    }
+
+    .gifbox{
+      display:flex; flex-direction:column; gap:10px;
+      align-items:center; justify-content:center;
+      padding: 14px;
+    }
+
+    .gif{
+      width: min(360px, 82vw);
+      border-radius: 18px;
+      box-shadow: 0 12px 28px rgba(0,0,0,.12);
+      border: 1px solid rgba(255,255,255,.6);
+      background:#fff;
+    }
+
+    .btnrow{
+      display:flex; gap:12px;
+      justify-content:center;
+      flex-wrap:wrap;
+      margin-top: 16px;
+    }
+
+    button{
+      border:0;
+      padding: 12px 18px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      border-radius: 14px;
+      cursor:pointer;
+      box-shadow: 0 10px 22px rgba(0,0,0,.12);
+      transition: transform .08s ease, filter .2s ease, opacity .2s ease;
+      min-width: 128px;
+    }
+    button:active{ transform: translateY(1px) scale(.99); }
+    button:focus{ outline: 3px solid rgba(255,255,255,.8); outline-offset: 2px; }
+
+    .yes{
+      color:white;
+      background: linear-gradient(135deg, var(--yes), var(--yes2));
+    }
+    .no{
+      color:white;
+      background: linear-gradient(135deg, var(--no), #fb7185);
+    }
+
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.7);
+      border:1px solid rgba(255,255,255,.7);
+      font-weight:700;
+      box-shadow: 0 10px 18px rgba(0,0,0,.06);
+      margin-top: 12px;
+    }
+
+    .hidden{ display:none !important; }
+
+    .final{
+      text-align:center;
+      padding: 10px 22px 26px;
+    }
+
+    .final h2{
+      margin: 10px 0 6px;
+      font-size: clamp(1.3rem, 3.2vw, 1.9rem);
+    }
+    .final p{
+      margin: 6px auto 0;
+      max-width: 60ch;
+      line-height:1.5;
+      font-size: 1.05rem;
+    }
+
+    /* Confetti */
+    .confetti{
+      position:fixed; inset:0; pointer-events:none;
+      overflow:hidden;
+    }
+    .confetti i{
+      position:absolute; top:-12px;
+      width:10px; height:14px;
+      opacity:.95;
+      animation: fall linear infinite;
+      border-radius: 3px;
+      filter: drop-shadow(0 4px 6px rgba(0,0,0,.08));
+    }
+    @keyframes fall{
+      to { transform: translateY(110vh) rotate(720deg); opacity:.85; }
+    }
+
+    .footerNote{
+      text-align:center;
+      font-size:.9rem;
+      opacity:.75;
+      padding: 10px 0 0;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- floating hearts background -->
+  <div class="hearts" aria-hidden="true" id="hearts"></div>
+  <div class="confetti hidden" aria-hidden="true" id="confetti"></div>
+
+  <main class="wrap">
+    <section class="card" id="page1">
+      <div class="top">
+        <h1>Will you be my Valentine? 💘</h1>
+        <div class="sub">
+          Bubu and Dudu are asking with maximum cuteness 😚<br/>
+          (There is only one correct answer…)
+        </div>
+        <div class="badge">🐼 Bubu &nbsp;❤️&nbsp; 🐻 Dudu</div>
+      </div>
+
+      <div class="grid">
+        <div class="gifbox">
+          <img class="gif" alt="Bubu and Dudu kissing"
+               src="https://media1.tenor.com/m/5IwZW7QpyoYAAAAd/love-bubu-dudu.gif" />
+          <div class="footerNote">Tap “Yes” 😌</div>
+        </div>
+
+        <div style="padding:14px 12px 22px; text-align:center;">
+          <div style="font-size:1.15rem; line-height:1.55; opacity:.92; margin: 0 auto; max-width: 48ch;">
+            I’m choosing you — today, tomorrow, and all my tomorrows.
+            <br/><br/>
+            So… what do you say? 💞
+          </div>
+
+          <div class="btnrow">
+            <button class="yes" id="yesBtn">Yes ✅</button>
+            <button class="no" id="noBtn">No ❌</button>
+          </div>
+
+          <div style="margin-top:10px; font-size:.95rem; opacity:.8;">
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card hidden" id="page2">
+      <div class="top">
+        <h1>Yayyyyy!! 💖</h1>
+        <div class="sub">
+          Thanks for the acceptance 🥹✨
+        </div>
+        <div class="badge">🫶 Now loading: Forever</div>
+      </div>
+
+      <div class="grid">
+        <div class="gifbox">
+          <img class="gif" alt="Bubu and Dudu hugs"
+               src="https://media.tenor.com/1XuHllkjoM4AAAAj/hug-bubu.gif" />
+          <div class="footerNote">Come hereeee 🤗</div>
+        </div>
+
+        <div class="final">
+          <h2>Next step: Happy Life & Marriage, my soul mate 💍🌸</h2>
+          <p>
+            From silly giggles to big dreams — I want every chapter with you.
+            <br/><br/>
+            <strong>Forever starts now.</strong> 🥰
+          </p>
+
+          <div style="margin-top:14px;">
+            <img class="gif" alt="Bubu and Dudu wedding"
+                 src="https://media1.tenor.com/m/-Jq-94zumjEAAAAd/bubu-dudu.gif"
+                 style="max-width: 320px;" />
+          </div>
+
+          <div style="margin-top:14px; font-weight:800; font-size:1.05rem;">
+            — bubu 💌
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // ---- Hearts background
+    (function makeHearts(){
+      const root = document.getElementById("hearts");
+      const count = 18;
+      for(let i=0;i<count;i++){
+        const h = document.createElement("div");
+        h.className = "heart";
+        const left = Math.random()*100;
+        const dur = 6 + Math.random()*8;
+        const delay = Math.random()*4;
+        const size = 10 + Math.random()*16;
+        h.style.left = left + "vw";
+        h.style.animationDuration = dur + "s";
+        h.style.animationDelay = delay + "s";
+        h.style.width = size + "px";
+        h.style.height = size + "px";
+        h.style.opacity = (0.45 + Math.random()*0.45).toFixed(2);
+        root.appendChild(h);
+      }
+    })();
+
+    // ---- Confetti
+    function fireConfetti(){
+      const c = document.getElementById("confetti");
+      c.classList.remove("hidden");
+      c.innerHTML = "";
+      const pieces = 80;
+      for(let i=0;i<pieces;i++){
+        const p = document.createElement("i");
+        p.style.left = (Math.random()*100) + "vw";
+        p.style.animationDuration = (2.8 + Math.random()*2.5) + "s";
+        p.style.animationDelay = (Math.random()*0.6) + "s";
+        p.style.transform = "rotate(" + (Math.random()*360) + "deg)";
+        p.style.opacity = (0.6 + Math.random()*0.4).toFixed(2);
+        p.style.width = (6 + Math.random()*10) + "px";
+        p.style.height = (8 + Math.random()*14) + "px";
+        // random bright color without hardcoding a palette-heavy theme
+        const hue = Math.floor(Math.random()*360);
+        p.style.background = "hsl(" + hue + " 90% 70%)";
+        c.appendChild(p);
+      }
+      // auto-hide after a bit
+      setTimeout(()=> c.classList.add("hidden"), 4200);
+    }
+
+    function goYes(){
+      document.getElementById("page1").classList.add("hidden");
+      document.getElementById("page2").classList.remove("hidden");
+      fireConfetti();
+      // optional tiny vibration on mobile (safe no-op on desktop)
+      if (navigator.vibrate) navigator.vibrate([60, 30, 60]);
+    }
+
+    const yesBtn = document.getElementById("yesBtn");
+    const noBtn  = document.getElementById("noBtn");
+
+    yesBtn.addEventListener("click", goYes);
+
+    // "No" is an illusion: clicking it immediately triggers Yes
+    noBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      noBtn.textContent = "Nice try 😌";
+      noBtn.style.opacity = "0.85";
+      // quickly revert to Yes flow
+      setTimeout(goYes, 220);
+    });
+  </script>
+</body>
+</html>
