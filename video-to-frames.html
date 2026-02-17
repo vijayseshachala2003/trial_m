@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Frame Extractor</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;700;800&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --card: #1a1a26;
+    --border: #2a2a40;
+    --accent: #7c5cfc;
+    --accent2: #fc5c7c;
+    --text: #e8e8f8;
+    --muted: #6868a8;
+    --green: #4cffc8;
+    --mono: 'DM Mono', monospace;
+    --display: 'Syne', sans-serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px;
+    overflow-x: hidden;
+  }
+
+  /* Animated background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(124,92,252,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(124,92,252,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Glow orbs */
+  body::after {
+    content: '';
+    position: fixed;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(124,92,252,0.08) 0%, transparent 70%);
+    top: -200px; left: -200px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .orb2 {
+    position: fixed;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(252,92,124,0.06) 0%, transparent 70%);
+    bottom: -100px; right: -100px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 860px;
+  }
+
+  /* Header */
+  header {
+    text-align: center;
+    margin-bottom: 48px;
+    animation: fadeDown 0.6s ease both;
+  }
+
+  .label-tag {
+    display: inline-block;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    padding: 4px 12px;
+    border-radius: 2px;
+    margin-bottom: 16px;
+    opacity: 0.8;
+  }
+
+  h1 {
+    font-family: var(--display);
+    font-size: clamp(36px, 6vw, 64px);
+    font-weight: 800;
+    letter-spacing: -2px;
+    line-height: 1;
+    background: linear-gradient(135deg, var(--text) 30%, var(--accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .subtitle {
+    margin-top: 12px;
+    color: var(--muted);
+    font-size: 13px;
+    letter-spacing: 0.05em;
+  }
+
+  /* Upload Zone */
+  .upload-zone {
+    border: 1.5px dashed var(--border);
+    border-radius: 12px;
+    padding: 48px 32px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    position: relative;
+    overflow: hidden;
+    background: var(--surface);
+    animation: fadeUp 0.6s 0.1s ease both;
+  }
+
+  .upload-zone::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(124,92,252,0.05), rgba(252,92,124,0.05));
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .upload-zone:hover, .upload-zone.drag-over {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+  }
+
+  .upload-zone:hover::before, .upload-zone.drag-over::before {
+    opacity: 1;
+  }
+
+  .upload-icon {
+    width: 56px; height: 56px;
+    margin: 0 auto 16px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px;
+    box-shadow: 0 8px 32px rgba(124,92,252,0.3);
+  }
+
+  .upload-title {
+    font-family: var(--display);
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .upload-sub {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+
+  .btn-browse {
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    padding: 10px 24px;
+    border-radius: 6px;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-browse:hover {
+    background: var(--accent);
+    color: white;
+    box-shadow: 0 0 24px rgba(124,92,252,0.4);
+  }
+
+  /* Video Preview */
+  .video-preview {
+    display: none;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    animation: fadeUp 0.4s ease both;
+  }
+
+  .video-preview.visible { display: block; }
+
+  .preview-header {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .file-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .file-dot {
+    width: 8px; height: 8px;
+    background: var(--green);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--green);
+    animation: pulse 2s infinite;
+  }
+
+  .file-name {
+    font-size: 12px;
+    color: var(--text);
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .file-size {
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .btn-clear {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.2s;
+  }
+
+  .btn-clear:hover { color: var(--accent2); background: rgba(252,92,124,0.1); }
+
+  video {
+    width: 100%;
+    max-height: 380px;
+    display: block;
+    background: #000;
+  }
+
+  .video-meta {
+    padding: 12px 20px;
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+
+  .meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .meta-label {
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .meta-value {
+    font-size: 13px;
+    color: var(--green);
+    font-weight: 500;
+  }
+
+  /* Controls */
+  .controls {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+    display: none;
+    animation: fadeUp 0.4s ease both;
+  }
+
+  .controls.visible { display: block; }
+
+  .controls-title {
+    font-family: var(--display);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .controls-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .control-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  @media (max-width: 600px) {
+    .control-grid { grid-template-columns: 1fr; }
+  }
+
+  .control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .control-group.full { grid-column: 1 / -1; }
+
+  label {
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  /* FPS Slider */
+  .fps-wrapper {
+    position: relative;
+  }
+
+  .fps-display {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+
+  .fps-value {
+    font-family: var(--display);
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  .fps-unit {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .fps-presets {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .fps-preset {
+    padding: 4px 10px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-family: var(--mono);
+    font-size: 11px;
+    cursor: pointer;
+    background: none;
+    color: var(--muted);
+    transition: all 0.15s;
+  }
+
+  .fps-preset:hover, .fps-preset.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(124,92,252,0.1);
+  }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    background: var(--border);
+    border-radius: 4px;
+    outline: none;
+    margin: 8px 0;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px; height: 18px;
+    background: var(--accent);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 12px rgba(124,92,252,0.5);
+    transition: transform 0.15s;
+  }
+
+  input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+  }
+
+  /* Format selector */
+  .format-tabs {
+    display: flex;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--card);
+  }
+
+  .format-tab {
+    flex: 1;
+    padding: 10px;
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 12px;
+    cursor: pointer;
+    border: none;
+    background: none;
+    color: var(--muted);
+    transition: all 0.2s;
+  }
+
+  .format-tab.active {
+    background: var(--accent);
+    color: white;
+  }
+
+  /* Time range */
+  .time-inputs {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .time-input {
+    flex: 1;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    padding: 10px 12px;
+    font-family: var(--mono);
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .time-input:focus { border-color: var(--accent); }
+  .time-sep { color: var(--muted); font-size: 18px; }
+
+  /* Quality slider */
+  .quality-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 4px;
+    letter-spacing: 0.05em;
+  }
+
+  /* Extract button */
+  .btn-extract {
+    width: 100%;
+    padding: 18px;
+    background: linear-gradient(135deg, var(--accent), #9c7cff);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-family: var(--display);
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: all 0.25s;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(124,92,252,0.35);
+  }
+
+  .btn-extract::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, transparent, rgba(255,255,255,0.1));
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .btn-extract:hover::before { opacity: 1; }
+  .btn-extract:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(124,92,252,0.5); }
+  .btn-extract:active { transform: translateY(0); }
+  .btn-extract:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  /* Progress */
+  .progress-section {
+    display: none;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    animation: fadeUp 0.4s ease both;
+  }
+
+  .progress-section.visible { display: block; }
+
+  .progress-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+
+  .progress-label {
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .progress-count {
+    font-family: var(--display);
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  .progress-bar-bg {
+    height: 6px;
+    background: var(--card);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 6px;
+    transition: width 0.1s;
+    position: relative;
+  }
+
+  .progress-bar-fill::after {
+    content: '';
+    position: absolute;
+    right: 0; top: 50%;
+    transform: translate(50%, -50%);
+    width: 10px; height: 10px;
+    background: var(--accent2);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--accent2);
+  }
+
+  .progress-status {
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  /* Frames grid */
+  .frames-section {
+    display: none;
+    animation: fadeUp 0.4s ease both;
+  }
+
+  .frames-section.visible { display: block; }
+
+  .frames-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    flex-wrap: gap;
+    gap: 12px;
+  }
+
+  .frames-title {
+    font-family: var(--display);
+    font-size: 20px;
+    font-weight: 700;
+  }
+
+  .btn-download-all {
+    background: transparent;
+    border: 1px solid var(--green);
+    color: var(--green);
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .btn-download-all:hover {
+    background: var(--green);
+    color: var(--bg);
+    box-shadow: 0 0 24px rgba(76,255,200,0.3);
+  }
+
+  .stats-bar {
+    display: flex;
+    gap: 24px;
+    padding: 14px 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .stat-label {
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .stat-val {
+    font-size: 16px;
+    font-family: var(--display);
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .frames-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+  }
+
+  .frame-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.2s;
+    animation: popIn 0.3s ease both;
+    position: relative;
+  }
+
+  .frame-card:hover {
+    border-color: var(--accent);
+    transform: scale(1.03);
+    z-index: 2;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  }
+
+  .frame-card img {
+    width: 100%;
+    display: block;
+    aspect-ratio: 16/9;
+    object-fit: cover;
+  }
+
+  .frame-footer {
+    padding: 6px 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .frame-num {
+    font-size: 10px;
+    color: var(--muted);
+    font-family: var(--mono);
+  }
+
+  .frame-time {
+    font-size: 10px;
+    color: var(--accent);
+  }
+
+  .frame-dl {
+    position: absolute;
+    top: 6px; right: 6px;
+    background: rgba(0,0,0,0.7);
+    border: none;
+    color: white;
+    border-radius: 4px;
+    width: 26px; height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s;
+    font-size: 13px;
+  }
+
+  .frame-card:hover .frame-dl { opacity: 1; }
+
+  /* Animations */
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  @keyframes popIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  .section { margin-bottom: 20px; }
+  input[type="file"] { display: none; }
+</style>
+</head>
+<body>
+<div class="orb2"></div>
+
+<div class="container">
+
+  <!-- Header -->
+  <header>
+    <div class="label-tag">// Utility Tool</div>
+    <h1>Frame Extractor</h1>
+    <p class="subtitle">Extract frames from any video · Dynamic FPS · Instant Download</p>
+  </header>
+
+  <!-- Upload Section -->
+  <div class="section">
+    <div class="upload-zone" id="uploadZone">
+      <input type="file" id="fileInput" accept="video/*" />
+      <div class="upload-icon">🎬</div>
+      <div class="upload-title">Drop your video here</div>
+      <div class="upload-sub">Supports MP4, WebM, MOV, AVI, MKV and more</div>
+      <button class="btn-browse" onclick="document.getElementById('fileInput').click()">Browse File</button>
+    </div>
+  </div>
+
+  <!-- Video Preview -->
+  <div class="section">
+    <div class="video-preview" id="videoPreview">
+      <div class="preview-header">
+        <div class="file-info">
+          <div class="file-dot"></div>
+          <span class="file-name" id="fileName">—</span>
+          <span class="file-size" id="fileSize"></span>
+        </div>
+        <button class="btn-clear" id="clearBtn" title="Remove video">✕</button>
+      </div>
+      <video id="videoEl" controls preload="metadata"></video>
+      <div class="video-meta">
+        <div class="meta-item">
+          <span class="meta-label">Duration</span>
+          <span class="meta-value" id="metaDuration">—</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Resolution</span>
+          <span class="meta-value" id="metaRes">—</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Est. Frames</span>
+          <span class="meta-value" id="metaFrames">—</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Size</span>
+          <span class="meta-value" id="metaSize">—</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="section">
+    <div class="controls" id="controls">
+      <div class="controls-title">Extraction Settings</div>
+      <div class="control-grid">
+
+        <!-- FPS Control -->
+        <div class="control-group full">
+          <label>Frames Per Second (FPS)</label>
+          <div class="fps-display">
+            <span class="fps-value" id="fpsDisplay">1</span>
+            <span class="fps-unit">fps</span>
+          </div>
+          <input type="range" id="fpsSlider" min="0.1" max="30" step="0.1" value="1" />
+          <div class="fps-presets">
+            <button class="fps-preset active" onclick="setFps(0.5)">0.5</button>
+            <button class="fps-preset" onclick="setFps(1)">1</button>
+            <button class="fps-preset" onclick="setFps(2)">2</button>
+            <button class="fps-preset" onclick="setFps(5)">5</button>
+            <button class="fps-preset" onclick="setFps(10)">10</button>
+            <button class="fps-preset" onclick="setFps(15)">15</button>
+            <button class="fps-preset" onclick="setFps(24)">24</button>
+            <button class="fps-preset" onclick="setFps(30)">30</button>
+          </div>
+        </div>
+
+        <!-- Format -->
+        <div class="control-group">
+          <label>Output Format</label>
+          <div class="format-tabs">
+            <button class="format-tab active" onclick="selectFormat('jpeg', this)">JPEG</button>
+            <button class="format-tab" onclick="selectFormat('png', this)">PNG</button>
+            <button class="format-tab" onclick="selectFormat('webp', this)">WebP</button>
+          </div>
+        </div>
+
+        <!-- Quality -->
+        <div class="control-group">
+          <label>Quality — <span id="qualityDisplay">92</span>%</label>
+          <input type="range" id="qualitySlider" min="10" max="100" step="1" value="92" />
+          <div class="quality-labels"><span>Draft</span><span>High</span><span>Max</span></div>
+        </div>
+
+        <!-- Time Range -->
+        <div class="control-group">
+          <label>Start Time (seconds)</label>
+          <input class="time-input" type="number" id="startTime" min="0" step="0.1" value="0" placeholder="0.0" />
+        </div>
+
+        <div class="control-group">
+          <label>End Time (seconds)</label>
+          <input class="time-input" type="number" id="endTime" min="0" step="0.1" placeholder="Full video" />
+        </div>
+
+      </div>
+
+      <div style="margin-top:24px;">
+        <button class="btn-extract" id="extractBtn" onclick="startExtraction()">
+          ⚡ Extract Frames
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Progress -->
+  <div class="section">
+    <div class="progress-section" id="progressSection">
+      <div class="progress-top">
+        <span class="progress-label">Extracting</span>
+        <span class="progress-count" id="progressCount">0 / 0</span>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="progressBar" style="width:0%"></div>
+      </div>
+      <div class="progress-status" id="progressStatus">Preparing...</div>
+    </div>
+  </div>
+
+  <!-- Frames Output -->
+  <div class="section">
+    <div class="frames-section" id="framesSection">
+      <div class="frames-header">
+        <div class="frames-title">Extracted Frames</div>
+        <button class="btn-download-all" onclick="downloadAll()">
+          ↓ Download All
+        </button>
+      </div>
+      <div class="stats-bar" id="statsBar"></div>
+      <div class="frames-grid" id="framesGrid"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // State
+  let videoFile = null;
+  let outputFormat = 'jpeg';
+  let extractedFrames = [];
+
+  // DOM refs
+  const uploadZone = document.getElementById('uploadZone');
+  const fileInput = document.getElementById('fileInput');
+  const videoPreview = document.getElementById('videoPreview');
+  const videoEl = document.getElementById('videoEl');
+  const controlsEl = document.getElementById('controls');
+  const fpsSlider = document.getElementById('fpsSlider');
+  const fpsDisplay = document.getElementById('fpsDisplay');
+  const qualitySlider = document.getElementById('qualitySlider');
+  const qualityDisplay = document.getElementById('qualityDisplay');
+  const progressSection = document.getElementById('progressSection');
+  const framesSection = document.getElementById('framesSection');
+  const framesGrid = document.getElementById('framesGrid');
+  const progressBar = document.getElementById('progressBar');
+  const progressCount = document.getElementById('progressCount');
+  const progressStatus = document.getElementById('progressStatus');
+  const extractBtn = document.getElementById('extractBtn');
+
+  // Drag & drop
+  uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+  uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+  uploadZone.addEventListener('drop', e => {
+    e.preventDefault();
+    uploadZone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('video/')) loadVideo(file);
+  });
+
+  uploadZone.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', e => { if (e.target.files[0]) loadVideo(e.target.files[0]); });
+
+  document.getElementById('clearBtn').addEventListener('click', clearVideo);
+
+  fpsSlider.addEventListener('input', () => {
+    const v = parseFloat(fpsSlider.value);
+    fpsDisplay.textContent = v % 1 === 0 ? v : v.toFixed(1);
+    updateEstFrames();
+    highlightActivePreset(v);
+  });
+
+  qualitySlider.addEventListener('input', () => {
+    qualityDisplay.textContent = qualitySlider.value;
+  });
+
+  document.getElementById('startTime').addEventListener('input', updateEstFrames);
+  document.getElementById('endTime').addEventListener('input', updateEstFrames);
+
+  function loadVideo(file) {
+    videoFile = file;
+    const url = URL.createObjectURL(file);
+    videoEl.src = url;
+    document.getElementById('fileName').textContent = file.name;
+    document.getElementById('fileSize').textContent = formatBytes(file.size);
+    document.getElementById('metaSize').textContent = formatBytes(file.size);
+
+    videoEl.onloadedmetadata = () => {
+      const dur = videoEl.duration;
+      document.getElementById('metaDuration').textContent = formatTime(dur);
+      document.getElementById('metaRes').textContent = `${videoEl.videoWidth}×${videoEl.videoHeight}`;
+      document.getElementById('endTime').value = dur.toFixed(1);
+      document.getElementById('endTime').max = dur;
+      document.getElementById('startTime').max = dur;
+      updateEstFrames();
+    };
+
+    videoPreview.classList.add('visible');
+    controlsEl.classList.add('visible');
+    framesSection.classList.remove('visible');
+    progressSection.classList.remove('visible');
+  }
+
+  function clearVideo() {
+    videoFile = null;
+    videoEl.src = '';
+    fileInput.value = '';
+    videoPreview.classList.remove('visible');
+    controlsEl.classList.remove('visible');
+    framesSection.classList.remove('visible');
+    progressSection.classList.remove('visible');
+    framesGrid.innerHTML = '';
+    extractedFrames = [];
+  }
+
+  function setFps(val) {
+    fpsSlider.value = val;
+    fpsDisplay.textContent = val % 1 === 0 ? val : val.toFixed(1);
+    highlightActivePreset(val);
+    updateEstFrames();
+  }
+
+  function highlightActivePreset(val) {
+    document.querySelectorAll('.fps-preset').forEach(btn => {
+      btn.classList.toggle('active', parseFloat(btn.textContent) === parseFloat(val));
+    });
+  }
+
+  function selectFormat(fmt, el) {
+    outputFormat = fmt;
+    document.querySelectorAll('.format-tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  function updateEstFrames() {
+    const dur = videoEl.duration || 0;
+    const start = Math.max(0, parseFloat(document.getElementById('startTime').value) || 0);
+    const end = Math.min(dur, parseFloat(document.getElementById('endTime').value) || dur);
+    const fps = parseFloat(fpsSlider.value);
+    const count = Math.floor((end - start) * fps);
+    document.getElementById('metaFrames').textContent = count > 0 ? count.toLocaleString() : '—';
+  }
+
+  async function startExtraction() {
+    if (!videoFile || !videoEl.duration) return;
+
+    const fps = parseFloat(fpsSlider.value);
+    const quality = parseInt(qualitySlider.value) / 100;
+    const start = Math.max(0, parseFloat(document.getElementById('startTime').value) || 0);
+    const end = Math.min(videoEl.duration, parseFloat(document.getElementById('endTime').value) || videoEl.duration);
+
+    if (start >= end) { alert('Start time must be before end time.'); return; }
+
+    const interval = 1 / fps;
+    const timestamps = [];
+    for (let t = start; t < end; t += interval) timestamps.push(t);
+
+    if (timestamps.length === 0) { alert('No frames to extract.'); return; }
+    if (timestamps.length > 500) {
+      if (!confirm(`This will extract ${timestamps.length} frames. Continue?`)) return;
+    }
+
+    // Reset
+    extractedFrames = [];
+    framesGrid.innerHTML = '';
+    framesSection.classList.remove('visible');
+    progressSection.classList.add('visible');
+    extractBtn.disabled = true;
+    progressBar.style.width = '0%';
+    progressCount.textContent = `0 / ${timestamps.length}`;
+    progressStatus.textContent = 'Starting extraction...';
+
+    // Offscreen canvas
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = videoEl.videoWidth;
+    canvas.height = videoEl.videoHeight;
+
+    const mimeType = outputFormat === 'png' ? 'image/png'
+                   : outputFormat === 'webp' ? 'image/webp'
+                   : 'image/jpeg';
+
+    for (let i = 0; i < timestamps.length; i++) {
+      const t = timestamps[i];
+      try {
+        await seekVideo(videoEl, t);
+        ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
+        const dataUrl = canvas.toDataURL(mimeType, quality);
+        extractedFrames.push({ dataUrl, time: t, index: i + 1 });
+
+        // Add card
+        addFrameCard(dataUrl, t, i + 1);
+
+        // Update progress
+        const pct = Math.round(((i + 1) / timestamps.length) * 100);
+        progressBar.style.width = pct + '%';
+        progressCount.textContent = `${i + 1} / ${timestamps.length}`;
+        progressStatus.textContent = `Frame ${i + 1} at ${t.toFixed(2)}s`;
+      } catch (e) {
+        console.warn('Skipped frame at', t);
+      }
+    }
+
+    // Done
+    extractBtn.disabled = false;
+    progressStatus.textContent = `✓ Done — ${timestamps.length} frames extracted`;
+
+    // Show stats
+    showStats(timestamps.length, fps, start, end);
+    framesSection.classList.add('visible');
+    framesSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function seekVideo(vid, time) {
+    return new Promise((resolve, reject) => {
+      const onSeeked = () => { vid.removeEventListener('seeked', onSeeked); resolve(); };
+      vid.addEventListener('seeked', onSeeked);
+      vid.currentTime = time;
+      setTimeout(() => reject(new Error('Seek timeout')), 5000);
+    });
+  }
+
+  function addFrameCard(dataUrl, time, num) {
+    const ext = outputFormat === 'png' ? 'png' : outputFormat === 'webp' ? 'webp' : 'jpg';
+    const card = document.createElement('div');
+    card.className = 'frame-card';
+    card.style.animationDelay = `${Math.min(num * 0.03, 0.5)}s`;
+    card.innerHTML = `
+      <img src="${dataUrl}" alt="Frame ${num}" loading="lazy"/>
+      <button class="frame-dl" onclick="downloadFrame('${dataUrl}', ${num})" title="Download">↓</button>
+      <div class="frame-footer">
+        <span class="frame-num">#${String(num).padStart(4, '0')}</span>
+        <span class="frame-time">${time.toFixed(2)}s</span>
+      </div>
+    `;
+    card.querySelector('img').addEventListener('click', () => openLightbox(dataUrl, num, time));
+    framesGrid.appendChild(card);
+  }
+
+  function showStats(total, fps, start, end) {
+    const dur = end - start;
+    const statsBar = document.getElementById('statsBar');
+    statsBar.innerHTML = `
+      <div class="stat"><span class="stat-label">Total Frames</span><span class="stat-val">${total.toLocaleString()}</span></div>
+      <div class="stat"><span class="stat-label">FPS Used</span><span class="stat-val">${fps % 1 === 0 ? fps : fps.toFixed(1)}</span></div>
+      <div class="stat"><span class="stat-label">Duration</span><span class="stat-val">${dur.toFixed(1)}s</span></div>
+      <div class="stat"><span class="stat-label">Format</span><span class="stat-val">${outputFormat.toUpperCase()}</span></div>
+      <div class="stat"><span class="stat-label">Resolution</span><span class="stat-val">${videoEl.videoWidth}×${videoEl.videoHeight}</span></div>
+    `;
+  }
+
+  function downloadFrame(dataUrl, num) {
+    const ext = outputFormat === 'png' ? 'png' : outputFormat === 'webp' ? 'webp' : 'jpg';
+    const a = document.createElement('a');
+    a.href = dataUrl;
+    a.download = `frame_${String(num).padStart(4, '0')}.${ext}`;
+    a.click();
+  }
+
+  function downloadAll() {
+    if (!extractedFrames.length) return;
+    const ext = outputFormat === 'png' ? 'png' : outputFormat === 'webp' ? 'webp' : 'jpg';
+    extractedFrames.forEach(f => {
+      const a = document.createElement('a');
+      a.href = f.dataUrl;
+      a.download = `frame_${String(f.index).padStart(4, '0')}_${f.time.toFixed(2)}s.${ext}`;
+      a.click();
+    });
+  }
+
+  // Simple lightbox
+  function openLightbox(src, num, time) {
+    const lb = document.createElement('div');
+    lb.style.cssText = `position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:9999;display:flex;align-items:center;justify-content:center;cursor:zoom-out;`;
+    lb.innerHTML = `
+      <div style="max-width:90vw;max-height:90vh;position:relative">
+        <img src="${src}" style="max-width:100%;max-height:85vh;border-radius:8px;display:block;"/>
+        <div style="color:#aaa;font-size:12px;text-align:center;margin-top:10px;font-family:'DM Mono',monospace;">
+          Frame #${String(num).padStart(4,'0')} · ${time.toFixed(3)}s
+        </div>
+      </div>`;
+    lb.addEventListener('click', () => lb.remove());
+    document.body.appendChild(lb);
+  }
+
+  // Helpers
+  function formatBytes(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  }
+
+  function formatTime(sec) {
+    const m = Math.floor(sec / 60);
+    const s = (sec % 60).toFixed(1);
+    return `${m}:${s.padStart(4, '0')}`;
+  }
+</script>
+</body>
+</html>
